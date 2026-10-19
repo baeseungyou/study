@@ -1,0 +1,1577 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Lab - 게임 캐릭터 선택 및 전투 과제 프로토타입</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.85);
+            --card-border: #334155;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --accent: #14b8a6;
+            --accent-hover: #0d9488;
+            --danger: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --gold: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', 'Malgun Gothic', -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background-image: radial-gradient(#1e293b 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        header {
+            background-color: rgba(15, 23, 42, 0.9);
+            border-bottom: 1px solid var(--card-border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            backdrop-filter: blur(8px);
+        }
+
+        .logo-group h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            background-color: rgba(99, 102, 241, 0.2);
+            color: #a5b4fc;
+            border: 1px solid rgba(99, 102, 241, 0.4);
+        }
+
+        .progress-steps {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            font-size: 0.85rem;
+        }
+
+        .step-pill {
+            padding: 0.4rem 0.8rem;
+            border-radius: 9999px;
+            background-color: #1e293b;
+            color: var(--text-muted);
+            border: 1px solid var(--card-border);
+            transition: all 0.3s ease;
+        }
+
+        .step-pill.active {
+            background-color: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+            font-weight: 600;
+        }
+
+        .btn-restart {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+            background-color: #334155;
+            color: #f8fafc;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-restart:hover { background-color: #475569; }
+
+        main {
+            flex: 1;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .phase-card {
+            width: 100%;
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(12px);
+        }
+
+        .hidden { display: none !important; }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #cbd5e1;
+        }
+
+        .input-text {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background-color: #0f172a;
+            border: 1px solid var(--card-border);
+            border-radius: 0.5rem;
+            color: #fff;
+            font-size: 0.95rem;
+        }
+        .input-text:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .radio-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+        }
+
+        .radio-card {
+            position: relative;
+            background-color: #0f172a;
+            border: 2px solid var(--card-border);
+            padding: 1rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .radio-card:hover { border-color: #475569; }
+        .radio-card input { position: absolute; opacity: 0; }
+        .radio-card.selected {
+            border-color: var(--primary);
+            background-color: rgba(99, 102, 241, 0.05);
+        }
+
+        .radio-title {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+            color: #fff;
+        }
+        .radio-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 0.85rem;
+            background-color: var(--primary);
+            color: #fff;
+            font-weight: 600;
+            font-size: 1rem;
+            border: none;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #0f172a;
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--card-border);
+            margin-bottom: 1.5rem;
+        }
+
+        .timer-box {
+            display: flex;
+            gap: 1.5rem;
+            font-family: monospace;
+        }
+
+        .timer-item { text-align: right; }
+        .timer-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            display: block;
+        }
+        .timer-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        .timer-value.warning {
+            color: var(--danger);
+            animation: blink 0.5s infinite alternate;
+        }
+
+        @keyframes blink {
+            from { opacity: 1; }
+            to { opacity: 0.4; }
+        }
+
+        .char-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .char-card {
+            background-color: #0f172a;
+            border: 2px solid var(--card-border);
+            border-radius: 0.85rem;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.25s ease;
+            position: relative;
+        }
+
+        .char-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .char-badge {
+            align-self: flex-start;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.375rem;
+            background-color: #1e293b;
+            color: #cbd5e1;
+            margin-bottom: 0.75rem;
+        }
+
+        .char-avatar-canvas {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 0.75rem auto;
+            border-radius: 50%;
+            background-color: #1e293b;
+            border: 2px solid #334155;
+            display: block;
+        }
+
+        .char-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 0.25rem;
+        }
+
+        .char-tagline {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 1rem;
+            min-height: 2.2em;
+        }
+
+        .stat-list {
+            background-color: rgba(30, 41, 59, 0.5);
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.35rem;
+        }
+
+        .char-lore {
+            font-size: 0.78rem;
+            color: #94a3b8;
+            line-height: 1.4;
+            background-color: rgba(15, 23, 42, 0.6);
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            flex-grow: 1;
+        }
+
+        .btn-select {
+            width: 100%;
+            padding: 0.6rem;
+            background-color: #334155;
+            color: #fff;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .char-card:hover .btn-select { background-color: var(--primary); }
+
+        #game-canvas-container {
+            position: relative;
+            width: 100%;
+            height: 380px;
+            background-color: #020617;
+            border: 2px solid var(--card-border);
+            border-radius: 0.75rem;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .game-hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .hud-hp-box {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--card-border);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            color: #fff;
+            font-size: 0.85rem;
+            width: 280px;
+        }
+
+        .hp-bar-bg {
+            width: 100%;
+            height: 12px;
+            background: #334155;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .hp-bar-fill {
+            height: 100%;
+            background: var(--danger);
+            width: 100%;
+            transition: width 0.1s linear;
+        }
+
+        .player-hp-fill { background: #22c55e; }
+
+        .controls-guide {
+            background-color: rgba(15, 23, 42, 0.7);
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--card-border);
+            font-size: 0.8rem;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .survey-q {
+            background-color: #0f172a;
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--card-border);
+            margin-bottom: 1.25rem;
+        }
+
+        .survey-q-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #f1f5f9;
+        }
+
+        .likert-scale {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .likert-opt {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .likert-opt input {
+            accent-color: var(--primary);
+            width: 1.1rem;
+            height: 1.1rem;
+            cursor: pointer;
+        }
+
+        .dash-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .dash-stat-card {
+            background-color: #0f172a;
+            border: 1px solid var(--card-border);
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+        }
+
+        .dash-stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .dash-stat-val {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            font-family: monospace;
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-box {
+            background-color: #0f172a;
+            border: 1px solid var(--card-border);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+        }
+
+        .chart-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #e2e8f0;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            background-color: #0f172a;
+            border: 1px solid var(--card-border);
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        th {
+            background-color: #1e293b;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        .btn-export {
+            background-color: var(--accent);
+            color: #fff;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-export:hover { background-color: var(--accent-hover); }
+
+        footer {
+            border-top: 1px solid var(--card-border);
+            padding: 1rem;
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            background-color: rgba(15, 23, 42, 0.9);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-group">
+            <h1>🎮 Test Lab <span class="badge">배승유 연구용 v2.1</span></h1>
+        </div>
+        <div class="progress-steps">
+            <span id="step-1" class="step-pill active">1. 조건 설정</span>
+            <span id="step-2" class="step-pill">2. 캐릭터 선택</span>
+            <span id="step-2-5" class="step-pill">2.5 전투 플레이</span>
+            <span id="step-3" class="step-pill">3. 인지 설문</span>
+            <span id="step-4" class="step-pill">4. 결과 대시보드</span>
+        </div>
+        <button class="btn-restart" onclick="resetExperiment()">실험 재시작</button>
+    </header>
+
+    <main>
+        <!-- 1단계: 연구 조건 설정 -->
+        <section id="phase-1" class="phase-card">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">연구 참가자 설정 및 실험 조건 선택</h2>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">게임 인터페이스 내 유저 의사결정 요소 추적 실험을 시작합니다.</p>
+            </div>
+
+            <form id="form-setup" onsubmit="handleStartExperiment(event)">
+                <div class="form-group">
+                    <label for="participant-id">참가자 식별 ID</label>
+                    <input type="text" id="participant-id" class="input-text" required placeholder="예: P_2026_01" value="P_DIRECT_TEST">
+                </div>
+
+                <div class="form-group">
+                    <label>실험 조건 A: 시간 제한 여부</label>
+                    <div class="radio-grid">
+                        <div class="radio-card selected" onclick="selectRadio(this, 'timeCondition', 'normal')">
+                            <input type="radio" name="timeCondition" value="normal" checked>
+                            <div class="radio-title">제한 없음 (일반)</div>
+                            <div class="radio-desc">시간 제약 없이 충분히 정보를 탐색한 후 캐릭터를 선택합니다.</div>
+                        </div>
+                        <div class="radio-card" onclick="selectRadio(this, 'timeCondition', 'pressure')">
+                            <input type="radio" name="timeCondition" value="pressure">
+                            <div class="radio-title">시간 압박 (5초 제한)</div>
+                            <div class="radio-desc">5초 카운트다운 내에 빠르게 판단하여 캐릭터를 선택합니다.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>실험 조건 B: 정보 제시 방식</label>
+                    <div class="radio-grid">
+                        <div class="radio-card selected" onclick="selectRadio(this, 'infoCondition', 'balanced')">
+                            <input type="radio" name="infoCondition" value="balanced" checked>
+                            <div class="radio-title">서사와 성능을 함께 제시</div>
+                            <div class="radio-desc">캐릭터의 스토리/외형과 능력치/티어 정보가 모두 제공됩니다.</div>
+                        </div>
+                        <div class="radio-card" onclick="selectRadio(this, 'infoCondition', 'lore')">
+                            <input type="radio" name="infoCondition" value="lore">
+                            <div class="radio-title">서사·외형 강조</div>
+                            <div class="radio-desc">스토리 및 배경 설정 정보가 강조되어 표시됩니다.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary">실험 시작하기 (캐릭터 선택 단계로)</button>
+            </form>
+        </section>
+
+        <!-- 2단계: 캐릭터 선택 과제 -->
+        <section id="phase-2" class="phase-card hidden">
+            <div class="task-header">
+                <div>
+                    <h2 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 0.25rem;">원하는 캐릭터를 선택하세요</h2>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);">카드에 마우스를 올려 상세 정보를 확인하고 최종 확정하십시오.</p>
+                </div>
+                <div class="timer-box">
+                    <div class="timer-item">
+                        <span class="timer-label">선택 고민 시간</span>
+                        <span id="timer-elapsed" class="timer-value">0.0s</span>
+                    </div>
+                    <div id="countdown-box" class="timer-item hidden">
+                        <span class="timer-label">남은 시간</span>
+                        <span id="timer-countdown" class="timer-value warning">5.0s</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="char-grid" id="char-card-container">
+                <!-- Dynamic Content -->
+            </div>
+        </section>
+
+        <!-- 2.5단계: 실제 인게임 전투 플레이 -->
+        <section id="phase-2-5" class="phase-card hidden">
+            <div class="task-header">
+                <div>
+                    <h2 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 0.25rem;">[실행 단계] 선택한 캐릭터 전투 과제</h2>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);">보스 몬스터의 공격을 피하면서 제한시간 15초 내에 보스의 HP(2,500)를 최대한 깎으세요!</p>
+                </div>
+                <div class="timer-box">
+                    <div class="timer-item">
+                        <span class="timer-label">전투 남은 시간</span>
+                        <span id="combat-timer" class="timer-value warning">15.0s</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls-guide">
+                <span>🕹️ <b>이동:</b> W, A, S, D 키</span>
+                <span>🎯 <b>일반 공격:</b> 마우스 좌클릭 (마우스 방향 발사)</span>
+                <span>💥 <b>특수 스킬:</b> Space 키</span>
+                <span id="char-skill-desc" style="color: var(--gold);"><b>캐릭터 특성:</b> 일반공격: 자동 추적 미사일 / Space: 융단 포격</span>
+            </div>
+
+            <div id="game-canvas-container">
+                <div class="game-hud">
+                    <div class="hud-hp-box">
+                        <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
+                            <span id="player-hud-title">V-800 타이탄 (Player)</span>
+                            <span id="player-hp-text">100 / 100</span>
+                        </div>
+                        <div class="hp-bar-bg">
+                            <div id="player-hp-fill" class="hp-bar-fill player-hp-fill"></div>
+                        </div>
+                    </div>
+                    <div class="hud-hp-box">
+                        <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
+                            <span style="color:#ef4444; font-weight:bold;">드래곤 보스 HP</span>
+                            <span id="boss-hp-text">2500 / 2500</span>
+                        </div>
+                        <div class="hp-bar-bg">
+                            <div id="boss-hp-fill" class="hp-bar-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <canvas id="gameCanvas" width="800" height="380"></canvas>
+            </div>
+
+            <button id="btn-finish-combat" class="btn-primary hidden" onclick="finishCombatTask()">전투 종료 (설문 작성으로 이동)</button>
+        </section>
+
+        <!-- 3단계: 인지 및 심리 평가 설문 -->
+        <section id="phase-3" class="phase-card hidden">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">선택 및 플레이 경험 사후 평가</h2>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">방금 하신 캐릭터 선택 및 전투 경험에 대해 답해 주세요. (7점 리커트 척도)</p>
+            </div>
+
+            <form id="form-survey" onsubmit="handleSurveySubmit(event)">
+                <div class="survey-q">
+                    <div class="survey-q-title">Q1. 방금 내가 내린 캐릭터 선택 결과에 만족한다. (선택 만족도)</div>
+                    <div class="likert-scale">
+                        <label class="likert-opt"><span>전혀 아니다</span><input type="radio" name="q_sat" value="1" required></label>
+                        <label class="likert-opt"><span>2</span><input type="radio" name="q_sat" value="2"></label>
+                        <label class="likert-opt"><span>3</span><input type="radio" name="q_sat" value="3"></label>
+                        <label class="likert-opt"><span>보통이다</span><input type="radio" name="q_sat" value="4"></label>
+                        <label class="likert-opt"><span>5</span><input type="radio" name="q_sat" value="5"></label>
+                        <label class="likert-opt"><span>6</span><input type="radio" name="q_sat" value="6"></label>
+                        <label class="likert-opt"><span>매우 그렇다</span><input type="radio" name="q_sat" value="7" checked></label>
+                    </div>
+                </div>
+
+                <div class="survey-q">
+                    <div class="survey-q-title">Q2. 외부나 시간 압박이 아닌, 오롯이 내 스스로의 의지로 자유롭게 캐릭터를 결정했다고 느꼈다. (행위 주체감 - Sense of Agency)</div>
+                    <div class="likert-scale">
+                        <label class="likert-opt"><span>전혀 아니다</span><input type="radio" name="q_agency" value="1" required></label>
+                        <label class="likert-opt"><span>2</span><input type="radio" name="q_agency" value="2"></label>
+                        <label class="likert-opt"><span>3</span><input type="radio" name="q_agency" value="3"></label>
+                        <label class="likert-opt"><span>보통이다</span><input type="radio" name="q_agency" value="4"></label>
+                        <label class="likert-opt"><span>5</span><input type="radio" name="q_agency" value="5"></label>
+                        <label class="likert-opt"><span>6</span><input type="radio" name="q_agency" value="6" checked></label>
+                        <label class="likert-opt"><span>매우 그렇다</span><input type="radio" name="q_agency" value="7"></label>
+                    </div>
+                </div>
+
+                <div class="survey-q">
+                    <div class="survey-q-title">Q3. 캐릭터를 결정할 때 '외형/일러스트/서사 스토리'가 가장 결정적인 요인이었다.</div>
+                    <div class="likert-scale">
+                        <label class="likert-opt"><span>전혀 아니다</span><input type="radio" name="q_visual" value="1" required></label>
+                        <label class="likert-opt"><span>2</span><input type="radio" name="q_visual" value="2"></label>
+                        <label class="likert-opt"><span>3</span><input type="radio" name="q_visual" value="3"></label>
+                        <label class="likert-opt"><span>보통이다</span><input type="radio" name="q_visual" value="4" checked></label>
+                        <label class="likert-opt"><span>5</span><input type="radio" name="q_visual" value="5"></label>
+                        <label class="likert-opt"><span>6</span><input type="radio" name="q_visual" value="6"></label>
+                        <label class="likert-opt"><span>매우 그렇다</span><input type="radio" name="q_visual" value="7"></label>
+                    </div>
+                </div>
+
+                <div class="survey-q">
+                    <div class="survey-q-title">Q4. 캐릭터를 결정할 때 '승률/승리 성능/1티어 평가'가 가장 결정적인 요인이었다.</div>
+                    <div class="likert-scale">
+                        <label class="likert-opt"><span>전혀 아니다</span><input type="radio" name="q_meta" value="1" required></label>
+                        <label class="likert-opt"><span>2</span><input type="radio" name="q_meta" value="2"></label>
+                        <label class="likert-opt"><span>3</span><input type="radio" name="q_meta" value="3"></label>
+                        <label class="likert-opt"><span>보통이다</span><input type="radio" name="q_meta" value="4"></label>
+                        <label class="likert-opt"><span>5</span><input type="radio" name="q_meta" value="5" checked></label>
+                        <label class="likert-opt"><span>6</span><input type="radio" name="q_meta" value="6"></label>
+                        <label class="likert-opt"><span>매우 그렇다</span><input type="radio" name="q_meta" value="7"></label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary">설문 제출 및 종합 대시보드 확인</button>
+            </form>
+        </section>
+
+        <!-- 4단계: 실시간 연구 분석 대시보드 -->
+        <section id="phase-4" class="phase-card hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <div>
+                    <h2 style="font-size: 1.4rem; font-weight: 700;">실시간 연구 데이터 분석 대시보드</h2>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">수집된 유저 텔레메트리 데이터 및 인지 지표 통계 요약</p>
+                </div>
+                <button class="btn-export" onclick="exportCSV()">CSV 데이터 내보내기</button>
+            </div>
+
+            <div class="dash-grid">
+                <div class="dash-stat-card">
+                    <span class="dash-stat-label">누적 테스트 표본 (N)</span>
+                    <span id="stat-n" class="dash-stat-val">0 명</span>
+                </div>
+                <div class="dash-stat-card">
+                    <span class="dash-stat-label">평균 의사결정 지연시간</span>
+                    <span id="stat-latency" class="dash-stat-val">0.00 초</span>
+                </div>
+                <div class="dash-stat-card">
+                    <span class="dash-stat-label">평균 행위 주체감 (Agency)</span>
+                    <span id="stat-agency" class="dash-stat-val">0.0 / 7</span>
+                </div>
+                <div class="dash-stat-card">
+                    <span class="dash-stat-label">평균 전투 피해량 (DPS)</span>
+                    <span id="stat-dps" class="dash-stat-val">0 dmg</span>
+                </div>
+            </div>
+
+            <div class="charts-container">
+                <div class="chart-box">
+                    <div class="chart-title">📊 캐릭터별 선택 비율 (Selection Ratio)</div>
+                    <canvas id="chartPie" width="320" height="200"></canvas>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-title">⏱️ 조건별 평균 의사결정 소요 시간 (ms)</div>
+                    <canvas id="chartBar" width="320" height="200"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-title">📄 Raw Telemetry Data Table</div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>시간 조건</th>
+                            <th>선택 캐릭터</th>
+                            <th>지연시간(ms)</th>
+                            <th>전투 딜량</th>
+                            <th>만족도</th>
+                            <th>주체감</th>
+                            <th>외형 영향</th>
+                            <th>성능 영향</th>
+                        </tr>
+                    </thead>
+                    <tbody id="data-table-body">
+                        <!-- Dynamic Content -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>HCI Research Prototype for Seung-Yu Bae | Department of Content IT / Big Data, Hallym University</p>
+    </footer>
+
+    <script>
+        // 캐릭터 데이터 정의
+        const CHARACTERS = [
+            {
+                id: 'char1',
+                name: '카엘른 (Kaelen)',
+                badge: '서사/외형 중심형',
+                tagline: '몰락한 왕국의 마지막 기사, 잃어버린 영광을 위해 검을 듭니다.',
+                tier: '3 Tier (승률 42.1%)',
+                style: '근접 돌진 연속검',
+                diff: '보통',
+                skillDesc: '일반공격: 순식간에 돌진 베기 / Space: 8방향 회전 검기',
+                lore: '고대 왕가의 피를 이은 검사로, 화려한 은빛 갑주를 입었으나 현재 메타에서는 다소 고전하는 캐릭터입니다.'
+            },
+            {
+                id: 'char2',
+                name: 'V-800 타이탄',
+                badge: '1티어 성능 중심형',
+                tagline: '압도적인 포력 화력과 유도 미사일을 갖춘 최강의 전투 병기.',
+                tier: '1 Tier (승률 58.9%)',
+                style: '원거리 유도 폭격',
+                diff: '쉬움',
+                skillDesc: '일반공격: 자동 추적 미사일 / Space: 보스 직격 융단 포격',
+                lore: '외형은 투박한 기계 로봇 덩어리이지만, 현 시즌 가장 높은 승률과 사기적인 성능을 자랑합니다.'
+            },
+            {
+                id: 'char3',
+                name: '리라 (Lyra)',
+                badge: '밸런스형 마법사',
+                tagline: '별의 원소를 다루며 강력한 연사 마법을 퍼붓는 원소술사.',
+                tier: '2 Tier (승률 50.3%)',
+                style: '마력탄 폭풍 연사',
+                diff: '보통',
+                skillDesc: '일반공격: 고속 마력탄 / Space: 12연사 마력 개방 폭풍',
+                lore: '신비로운 로브와 정령 룬을 사용하는 밸런스형 원거리 마법사입니다.'
+            },
+            {
+                id: 'char4',
+                name: '고블린 트리키',
+                badge: '변수 창출/조작 최상',
+                tagline: '신속하게 이동하여 적의 뒤통수를 치는 교활한 암살자.',
+                tier: '2 Tier (승률 49.1%)',
+                style: '순간이동 기습 표창',
+                diff: '🔥 최상 (과열/리스크)',
+                skillDesc: '일반공격: 곡선 3연발 표창 / Space: 보스 뒤 순간이동 (체력 -10)',
+                lore: '민첩한 초록색 고블린 암살자로, 정밀 조준과 순간이동 센스가 필수적인 캐릭터입니다.'
+            }
+        ];
+
+        // 연구 데이터 상태 관리
+        let experimentLogs = [
+            { id: 'P_SAMPLE_01', timeCond: 'normal', infoCond: 'balanced', char: 'V-800 타이탄', latency: 4200, damage: 1850, sat: 6, agency: 6, visual: 3, meta: 7 },
+            { id: 'P_SAMPLE_02', timeCond: 'pressure', infoCond: 'lore', char: 'V-800 타이탄', latency: 2900, damage: 2100, sat: 4, agency: 3, visual: 2, meta: 7 },
+            { id: 'P_SAMPLE_03', timeCond: 'normal', infoCond: 'lore', char: '카엘른 (Kaelen)', latency: 7100, damage: 1200, sat: 7, agency: 7, visual: 7, meta: 2 }
+        ];
+
+        let currentSession = {
+            participantId: 'P_DIRECT_TEST',
+            timeCondition: 'normal',
+            infoCondition: 'balanced',
+            startTime: 0,
+            selectedChar: 'V-800 타이탄',
+            latency: 3500,
+            hoverLogs: {},
+            switchCount: 0,
+            lastHoverChar: null,
+            combatTotalDamage: 0,
+            combatHits: 0
+        };
+
+        let timerInterval = null;
+        let countdownInterval = null;
+        let combatTimerInterval = null;
+        let countdownValue = 5.0;
+
+        // --- 전투 엔진 전역 변수 ---
+        const BOSS_MAX_HP = 2500;
+        let combatActive = false;
+        let combatTimeLeft = 15.0;
+        let canvas, ctx;
+        let keys = {};
+        let mousePos = { x: 400, y: 190 };
+        let playerObj = { x: 100, y: 190, speed: 4, hp: 100, maxHp: 100, heat: 0 };
+        let monsterObj = { x: 650, y: 190, hp: BOSS_MAX_HP, maxHp: BOSS_MAX_HP, attackTimer: 0 };
+        let playerProjectiles = [];
+        let bossProjectiles = [];
+        let damageTexts = [];
+
+        window.onload = function() {
+            renderCharCards();
+            initGameCanvas();
+        };
+
+        function selectRadio(cardElem, groupName, val) {
+            const container = cardElem.closest('.radio-grid');
+            container.querySelectorAll('.radio-card').forEach(c => c.classList.remove('selected'));
+            cardElem.classList.add('selected');
+            const radio = cardElem.querySelector(`input[value="${val}"]`);
+            if (radio) radio.checked = true;
+        }
+
+        function switchPhase(fromId, toId) {
+            document.getElementById(fromId).classList.add('hidden');
+            document.getElementById(toId).classList.remove('hidden');
+        }
+
+        function updateStepPill(activeStepId) {
+            document.querySelectorAll('.step-pill').forEach(p => p.classList.remove('active'));
+            const target = document.getElementById(activeStepId);
+            if (target) target.classList.add('active');
+        }
+
+        function resetExperiment() {
+            if (timerInterval) clearInterval(timerInterval);
+            if (countdownInterval) clearInterval(countdownInterval);
+            if (combatTimerInterval) clearInterval(combatTimerInterval);
+            combatActive = false;
+
+            document.querySelectorAll('section').forEach(sec => sec.classList.add('hidden'));
+            document.getElementById('phase-1').classList.remove('hidden');
+            updateStepPill('step-1');
+            document.getElementById('participant-id').value = 'P_' + Math.floor(Math.random() * 8999 + 1000);
+        }
+
+        function handleStartExperiment(e) {
+            e.preventDefault();
+            const pId = document.getElementById('participant-id').value;
+            const timeCond = document.querySelector('input[name="timeCondition"]:checked').value;
+            const infoCond = document.querySelector('input[name="infoCondition"]:checked').value;
+
+            currentSession.participantId = pId;
+            currentSession.timeCondition = timeCond;
+            currentSession.infoCondition = infoCond;
+
+            switchPhase('phase-1', 'phase-2');
+            updateStepPill('step-2');
+            startCharSelectionTask();
+        }
+
+        function renderCharCards() {
+            const container = document.getElementById('char-card-container');
+            container.innerHTML = CHARACTERS.map(char => `
+                <div class="char-card" 
+                     onmouseenter="logHoverStart('${char.id}')" 
+                     onmouseleave="logHoverEnd('${char.id}')">
+                    <div>
+                        <span class="char-badge">${char.badge}</span>
+                        <canvas id="avatar-canvas-${char.id}" class="char-avatar-canvas" width="100" height="100"></canvas>
+                        <div class="char-name">${char.name}</div>
+                        <div class="char-tagline">"${char.tagline}"</div>
+                        
+                        <div class="stat-list">
+                            <div class="stat-row"><span>티어/성능:</span> <strong style="color:var(--accent);">${char.tier}</strong></div>
+                            <div class="stat-row"><span>전투 스타일:</span> <span>${char.style}</span></div>
+                            <div class="stat-row"><span>조작 난이도:</span> <span style="color:var(--gold);">${char.diff}</span></div>
+                        </div>
+
+                        <div class="char-lore">${char.lore}</div>
+                    </div>
+                    <button class="btn-select" onclick="selectCharacter('${char.name}')">캐릭터 선택 확정</button>
+                </div>
+            `).join('');
+
+            setTimeout(() => {
+                CHARACTERS.forEach(char => drawCharAvatarCanvas(`avatar-canvas-${char.id}`, char.id));
+            }, 50);
+        }
+
+        function drawCharAvatarCanvas(canvasId, charId) {
+            const cvs = document.getElementById(canvasId);
+            if (!cvs) return;
+            const c = cvs.getContext('2d');
+            c.clearRect(0, 0, 100, 100);
+
+            if (charId === 'char1') {
+                c.fillStyle = '#334155'; c.beginPath(); c.arc(50, 50, 45, 0, Math.PI*2); c.fill();
+                c.fillStyle = '#cbd5e1'; c.beginPath(); c.arc(50, 45, 22, 0, Math.PI*2); c.fill();
+                c.fillStyle = '#6366f1'; c.fillRect(45, 38, 10, 6);
+                c.fillStyle = '#f59e0b'; c.beginPath(); c.moveTo(50, 10); c.lineTo(58, 25); c.lineTo(42, 25); c.fill();
+            } else if (charId === 'char2') {
+                c.fillStyle = '#1e293b'; c.beginPath(); c.arc(50, 50, 45, 0, Math.PI*2); c.fill();
+                c.fillStyle = '#475569'; c.fillRect(28, 28, 44, 44);
+                c.fillStyle = '#ef4444'; c.fillRect(35, 40, 30, 8);
+                c.fillStyle = '#10b981'; c.fillRect(22, 35, 6, 20);
+            } else if (charId === 'char3') {
+                c.fillStyle = '#2e1065'; c.beginPath(); c.arc(50, 50, 45, 0, Math.PI*2); c.fill();
+                c.fillStyle = '#a855f7'; c.beginPath(); c.arc(50, 50, 24, 0, Math.PI*2); c.fill();
+                c.strokeStyle = '#38bdf8'; c.lineWidth = 3; c.beginPath(); c.arc(50, 50, 32, 0, Math.PI*1.5); c.stroke();
+            } else {
+                c.fillStyle = '#064e3b'; c.beginPath(); c.arc(50, 50, 45, 0, Math.PI*2); c.fill();
+                c.fillStyle = '#22c55e'; c.beginPath(); c.arc(50, 52, 22, 0, Math.PI*2); c.fill();
+                c.fillStyle = '#f59e0b'; c.beginPath(); c.arc(42, 48, 4, 0, Math.PI*2); c.arc(58, 48, 4, 0, Math.PI*2); c.fill();
+                c.fillStyle = '#15803d'; c.beginPath(); c.moveTo(25, 45); c.lineTo(10, 30); c.lineTo(30, 55); c.fill();
+            }
+        }
+
+        function startCharSelectionTask() {
+            currentSession.startTime = performance.now();
+            let elapsed = 0;
+            
+            timerInterval = setInterval(() => {
+                elapsed = (performance.now() - currentSession.startTime) / 1000;
+                document.getElementById('timer-elapsed').innerText = elapsed.toFixed(1) + 's';
+            }, 100);
+
+            if (currentSession.timeCondition === 'pressure') {
+                document.getElementById('countdown-box').classList.remove('hidden');
+                countdownValue = 5.0;
+                countdownInterval = setInterval(() => {
+                    countdownValue -= 0.1;
+                    document.getElementById('timer-countdown').innerText = Math.max(0, countdownValue).toFixed(1) + 's';
+                    
+                    if (countdownValue <= 0) {
+                        clearInterval(countdownInterval);
+                        autoSelectCharacter();
+                    }
+                }, 100);
+            } else {
+                document.getElementById('countdown-box').classList.add('hidden');
+            }
+        }
+
+        function logHoverStart(charId) {
+            if (currentSession.lastHoverChar && currentSession.lastHoverChar !== charId) {
+                currentSession.switchCount++;
+            }
+            currentSession.lastHoverChar = charId;
+            if (!currentSession.hoverLogs[charId]) {
+                currentSession.hoverLogs[charId] = { count: 0, totalTime: 0, lastStart: 0 };
+            }
+            currentSession.hoverLogs[charId].count++;
+            currentSession.hoverLogs[charId].lastStart = performance.now();
+        }
+
+        function logHoverEnd(charId) {
+            if (currentSession.hoverLogs[charId] && currentSession.hoverLogs[charId].lastStart > 0) {
+                const duration = performance.now() - currentSession.hoverLogs[charId].lastStart;
+                currentSession.hoverLogs[charId].totalTime += duration;
+                currentSession.hoverLogs[charId].lastStart = 0;
+            }
+        }
+
+        function selectCharacter(charName) {
+            if (timerInterval) clearInterval(timerInterval);
+            if (countdownInterval) clearInterval(countdownInterval);
+
+            currentSession.latency = Math.round(performance.now() - currentSession.startTime);
+            currentSession.selectedChar = charName;
+
+            initCombatPhase();
+        }
+
+        function autoSelectCharacter() {
+            selectCharacter('V-800 타이탄');
+        }
+
+        function initCombatPhase() {
+            switchPhase('phase-2', 'phase-2-5');
+            switchPhase('phase-1', 'phase-2-5');
+            updateStepPill('step-2-5');
+
+            const charData = CHARACTERS.find(c => c.name === currentSession.selectedChar) || CHARACTERS[1];
+            document.getElementById('char-skill-desc').innerHTML = `<b>캐릭터 특성 (${charData.name}):</b> ${charData.skillDesc}`;
+            document.getElementById('player-hud-title').innerText = `${charData.name} (Player)`;
+
+            playerObj.hp = 100;
+            playerObj.maxHp = 100;
+            playerObj.x = 120;
+            playerObj.y = 190;
+            playerObj.heat = 0;
+
+            monsterObj.hp = BOSS_MAX_HP;
+            monsterObj.maxHp = BOSS_MAX_HP;
+            monsterObj.x = 650;
+            monsterObj.y = 190;
+            monsterObj.attackTimer = 0;
+
+            playerProjectiles = [];
+            bossProjectiles = [];
+            damageTexts = [];
+            
+            currentSession.combatTotalDamage = 0;
+            currentSession.combatHits = 0;
+            combatTimeLeft = 15.0;
+            combatActive = true;
+            document.getElementById('btn-finish-combat').classList.add('hidden');
+
+            updateHudHp();
+
+            if (combatTimerInterval) clearInterval(combatTimerInterval);
+            combatTimerInterval = setInterval(() => {
+                combatTimeLeft -= 0.1;
+                document.getElementById('combat-timer').innerText = Math.max(0, combatTimeLeft).toFixed(1) + 's';
+                
+                if (combatTimeLeft <= 0 || monsterObj.hp <= 0 || playerObj.hp <= 0) {
+                    endCombat();
+                }
+            }, 100);
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function initGameCanvas() {
+            canvas = document.getElementById('gameCanvas');
+            if (!canvas) return;
+            ctx = canvas.getContext('2d');
+
+            window.addEventListener('keydown', e => {
+                keys[e.key.toLowerCase()] = true;
+                if (e.code === 'Space' && combatActive) {
+                    useSpecialSkill();
+                    e.preventDefault();
+                }
+            });
+
+            window.addEventListener('keyup', e => {
+                keys[e.key.toLowerCase()] = false;
+            });
+
+            canvas.addEventListener('mousemove', e => {
+                const rect = canvas.getBoundingClientRect();
+                mousePos.x = e.clientX - rect.left;
+                mousePos.y = e.clientY - rect.top;
+            });
+
+            canvas.addEventListener('mousedown', e => {
+                if (combatActive && e.button === 0) {
+                    playerAttack();
+                }
+            });
+        }
+
+        function playerAttack() {
+            currentSession.combatHits++;
+            const charName = currentSession.selectedChar;
+
+            if (charName.includes('고블린')) {
+                if (playerObj.heat > 80) {
+                    damageTexts.push({ x: playerObj.x, y: playerObj.y - 20, text: '과열 상태!', color: '#ef4444', life: 30 });
+                    return;
+                }
+                playerObj.heat += 25;
+            }
+
+            const angle = Math.atan2(mousePos.y - playerObj.y, mousePos.x - playerObj.x);
+
+            if (charName.includes('카엘른')) {
+                playerObj.x += Math.cos(angle) * 45;
+                playerObj.y += Math.sin(angle) * 45;
+                dealDamageToBoss(120);
+            } else if (charName.includes('타이탄')) {
+                playerProjectiles.push({ x: playerObj.x, y: playerObj.y, vx: Math.cos(angle)*7, vy: Math.sin(angle)*7, damage: 150, homing: true, color: '#f59e0b' });
+                playerProjectiles.push({ x: playerObj.x, y: playerObj.y - 10, vx: Math.cos(angle)*6, vy: Math.sin(angle)*6, damage: 150, homing: true, color: '#f59e0b' });
+            } else if (charName.includes('리라')) {
+                playerProjectiles.push({ x: playerObj.x, y: playerObj.y, vx: Math.cos(angle)*12, vy: Math.sin(angle)*12, damage: 90, color: '#c084fc' });
+            } else {
+                for(let i=-1; i<=1; i++) {
+                    const sprAngle = angle + (i * 0.2);
+                    playerProjectiles.push({ x: playerObj.x, y: playerObj.y, vx: Math.cos(sprAngle)*9, vy: Math.sin(sprAngle)*9, damage: 85, color: '#22c55e' });
+                }
+            }
+        }
+
+        function useSpecialSkill() {
+            const charName = currentSession.selectedChar;
+            if (charName.includes('카엘른')) {
+                for(let i=0; i<8; i++) {
+                    const a = (Math.PI*2 / 8) * i;
+                    playerProjectiles.push({ x: playerObj.x, y: playerObj.y, vx: Math.cos(a)*8, vy: Math.sin(a)*8, damage: 70, color: '#a5b4fc' });
+                }
+                dealDamageToBoss(250);
+            } else if (charName.includes('타이탄')) {
+                dealDamageToBoss(450);
+            } else if (charName.includes('리라')) {
+                for(let i=0; i<12; i++) {
+                    setTimeout(() => {
+                        if (!combatActive) return;
+                        const a = Math.atan2(monsterObj.y - playerObj.y, monsterObj.x - playerObj.x) + (Math.random()-0.5)*0.4;
+                        playerProjectiles.push({ x: playerObj.x, y: playerObj.y, vx: Math.cos(a)*14, vy: Math.sin(a)*14, damage: 40, color: '#38bdf8' });
+                    }, i * 60);
+                }
+            } else {
+                playerObj.hp = Math.max(1, playerObj.hp - 10);
+                playerObj.x = monsterObj.x + 60;
+                playerObj.y = monsterObj.y;
+                dealDamageToBoss(300);
+                updateHudHp();
+            }
+        }
+
+        function dealDamageToBoss(dmg) {
+            monsterObj.hp = Math.max(0, monsterObj.hp - dmg);
+            currentSession.combatTotalDamage += dmg;
+            damageTexts.push({ x: monsterObj.x + (Math.random()-0.5)*40, y: monsterObj.y - 30, text: `-${dmg}`, color: '#f59e0b', life: 40 });
+            updateHudHp();
+        }
+
+        function dealDamageToPlayer(dmg) {
+            playerObj.hp = Math.max(0, playerObj.hp - dmg);
+            damageTexts.push({ x: playerObj.x, y: playerObj.y - 20, text: `-${dmg}`, color: '#ef4444', life: 40 });
+            updateHudHp();
+        }
+
+        function updateHudHp() {
+            const bossHpText = document.getElementById('boss-hp-text');
+            const bossHpFill = document.getElementById('boss-hp-fill');
+            const playerHpText = document.getElementById('player-hp-text');
+            const playerHpFill = document.getElementById('player-hp-fill');
+
+            if (bossHpText) bossHpText.innerText = `${monsterObj.hp} / ${monsterObj.maxHp}`;
+            if (bossHpFill) bossHpFill.style.width = `${(monsterObj.hp / monsterObj.maxHp) * 100}%`;
+
+            if (playerHpText) playerHpText.innerText = `${playerObj.hp} / ${playerObj.maxHp}`;
+            if (playerHpFill) playerHpFill.style.width = `${(playerObj.hp / playerObj.maxHp) * 100}%`;
+        }
+
+        function gameLoop() {
+            if (!combatActive) return;
+            updatePhysics();
+            renderCanvas();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function updatePhysics() {
+            let speed = playerObj.speed;
+            if (keys['w']) playerObj.y -= speed;
+            if (keys['s']) playerObj.y += speed;
+            if (keys['a']) playerObj.x -= speed;
+            if (keys['d']) playerObj.x += speed;
+
+            playerObj.x = Math.max(20, Math.min(780, playerObj.x));
+            playerObj.y = Math.max(20, Math.min(360, playerObj.y));
+
+            if (playerObj.heat > 0) playerObj.heat -= 0.5;
+
+            monsterObj.attackTimer++;
+            if (monsterObj.attackTimer > 50) {
+                monsterObj.attackTimer = 0;
+                const angle = Math.atan2(playerObj.y - monsterObj.y, playerObj.x - monsterObj.x);
+                for(let i=-1; i<=1; i++) {
+                    bossProjectiles.push({
+                        x: monsterObj.x, y: monsterObj.y,
+                        vx: Math.cos(angle + i*0.25) * 5,
+                        vy: Math.sin(angle + i*0.25) * 5,
+                        damage: 15
+                    });
+                }
+            }
+
+            for(let i = playerProjectiles.length - 1; i >= 0; i--) {
+                let p = playerProjectiles[i];
+                if (p.homing) {
+                    const angle = Math.atan2(monsterObj.y - p.y, monsterObj.x - p.x);
+                    p.vx += Math.cos(angle) * 0.5;
+                    p.vy += Math.sin(angle) * 0.5;
+                }
+                p.x += p.vx;
+                p.y += p.vy;
+
+                const dist = Math.hypot(p.x - monsterObj.x, p.y - monsterObj.y);
+                if (dist < 40) {
+                    dealDamageToBoss(p.damage);
+                    playerProjectiles.splice(i, 1);
+                    continue;
+                }
+
+                if (p.x < 0 || p.x > 800 || p.y < 0 || p.y > 380) {
+                    playerProjectiles.splice(i, 1);
+                }
+            }
+
+            for(let i = bossProjectiles.length - 1; i >= 0; i--) {
+                let bp = bossProjectiles[i];
+                bp.x += bp.vx;
+                bp.y += bp.vy;
+
+                const dist = Math.hypot(bp.x - playerObj.x, bp.y - playerObj.y);
+                if (dist < 25) {
+                    dealDamageToPlayer(bp.damage);
+                    bossProjectiles.splice(i, 1);
+                    continue;
+                }
+
+                if (bp.x < 0 || bp.x > 800 || bp.y < 0 || bp.y > 380) {
+                    bossProjectiles.splice(i, 1);
+                }
+            }
+
+            for(let i = damageTexts.length - 1; i >= 0; i--) {
+                damageTexts[i].y -= 0.8;
+                damageTexts[i].life--;
+                if (damageTexts[i].life <= 0) damageTexts.splice(i, 1);
+            }
+        }
+
+        function renderCanvas() {
+            if (!ctx) return;
+            ctx.clearRect(0, 0, 800, 380);
+
+            // 배경 그리드
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 1;
+            for(let x=0; x<800; x+=40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,380); ctx.stroke(); }
+            for(let y=0; y<380; y+=40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(800,y); ctx.stroke(); }
+
+            // --- 🐲 드래곤 보스 렌더링 ---
+            ctx.save();
+            ctx.translate(monsterObj.x, monsterObj.y);
+            
+            ctx.fillStyle = 'rgba(0,0,0,0.4)';
+            ctx.beginPath(); ctx.ellipse(0, 35, 40, 15, 0, 0, Math.PI * 2); ctx.fill();
+
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.15)';
+            ctx.beginPath(); ctx.arc(0, 0, 48 + Math.sin(Date.now() / 150) * 4, 0, Math.PI * 2); ctx.fill();
+
+            ctx.fillStyle = '#b91c1c';
+            ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI * 2); ctx.fill();
+
+            ctx.fillStyle = '#f59e0b';
+            ctx.beginPath(); ctx.moveTo(-15, -25); ctx.lineTo(-28, -48); ctx.lineTo(-8, -32); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(15, -25); ctx.lineTo(28, -48); ctx.lineTo(8, -32); ctx.fill();
+
+            ctx.fillStyle = '#991b1b';
+            ctx.beginPath(); ctx.moveTo(-25, -10); ctx.lineTo(-65, -30); ctx.lineTo(-45, 15); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(25, -10); ctx.lineTo(65, -30); ctx.lineTo(45, 15); ctx.fill();
+
+            ctx.fillStyle = '#fef08a';
+            ctx.beginPath(); ctx.arc(-10, -8, 6, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(10, -8, 6, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#000';
+            ctx.beginPath(); ctx.arc(-10, -8, 2.5, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(10, -8, 2.5, 0, Math.PI * 2); ctx.fill();
+
+            ctx.restore();
+
+            ctx.fillStyle = '#f8fafc';
+            ctx.font = 'bold 13px Pretendard, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('🐲 드래곤 보스', monsterObj.x, monsterObj.y - 52);
+
+            // --- ⚔️ 플레이어 캐릭터 렌더링 ---
+            const charName = currentSession.selectedChar || '';
+            ctx.save();
+            ctx.translate(playerObj.x, playerObj.y);
+
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.beginPath(); ctx.ellipse(0, 22, 20, 8, 0, 0, Math.PI * 2); ctx.fill();
+
+            if (charName.includes('카엘른')) {
+                ctx.fillStyle = '#94a3b8'; ctx.beginPath(); ctx.arc(0, 0, 20, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#38bdf8'; ctx.fillRect(-8, -6, 16, 5);
+                const angle = Math.atan2(mousePos.y - playerObj.y, mousePos.x - playerObj.x);
+                ctx.rotate(angle);
+                ctx.fillStyle = '#e2e8f0'; ctx.fillRect(10, -3, 28, 6);
+                ctx.fillStyle = '#f59e0b'; ctx.fillRect(8, -8, 4, 16);
+            } else if (charName.includes('타이탄')) {
+                ctx.fillStyle = '#334155'; ctx.fillRect(-22, -22, 44, 44);
+                ctx.fillStyle = '#ef4444'; ctx.fillRect(-12, -4, 24, 8);
+                ctx.fillStyle = '#475569';
+                ctx.fillRect(-26, -26, 12, 16);
+                ctx.fillRect(14, -26, 12, 16);
+            } else if (charName.includes('리라')) {
+                ctx.fillStyle = '#7e22ce'; ctx.beginPath(); ctx.arc(0, 0, 20, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#c084fc'; ctx.beginPath(); ctx.arc(0, -6, 14, 0, Math.PI * 2); ctx.fill();
+                const orbAngle = Date.now() / 200;
+                for (let i = 0; i < 3; i++) {
+                    const a = orbAngle + (i * Math.PI * 2 / 3);
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.beginPath(); ctx.arc(Math.cos(a) * 30, Math.sin(a) * 30, 5, 0, Math.PI * 2); ctx.fill();
+                }
+            } else {
+                ctx.fillStyle = '#15803d'; ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#22c55e';
+                ctx.beginPath(); ctx.moveTo(-12, -8); ctx.lineTo(-28, -18); ctx.lineTo(-14, 6); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(12, -8); ctx.lineTo(28, -18); ctx.lineTo(14, 6); ctx.fill();
+                const angle = Math.atan2(mousePos.y - playerObj.y, mousePos.x - playerObj.x);
+                ctx.rotate(angle);
+                ctx.fillStyle = '#cbd5e1';
+                ctx.fillRect(8, -12, 18, 3);
+                ctx.fillRect(8, 9, 18, 3);
+            }
+            ctx.restore();
+
+            // 조준선
+            ctx.strokeStyle = 'rgba(99, 102, 241, 0.4)';
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath(); ctx.moveTo(playerObj.x, playerObj.y); ctx.lineTo(mousePos.x, mousePos.y); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // 투사체
+            playerProjectiles.forEach(p => {
+                ctx.fillStyle = p.color || '#f59e0b';
+                ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI * 2); ctx.fill();
+            });
+
+            bossProjectiles.forEach(bp => {
+                ctx.fillStyle = '#ef4444';
+                ctx.beginPath(); ctx.arc(bp.x, bp.y, 8, 0, Math.PI * 2); ctx.fill();
+            });
+
+            damageTexts.forEach(dt => {
+                ctx.fillStyle = dt.color;
+                ctx.font = 'bold 16px Pretendard, monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(dt.text, dt.x, dt.y);
+            });
+        }
+
+        function endCombat() {
+            combatActive = false;
+            if (combatTimerInterval) clearInterval(combatTimerInterval);
+            document.getElementById('btn-finish-combat').classList.remove('hidden');
+        }
+
+        function finishCombatTask() {
+            switchPhase('phase-2-5', 'phase-3');
+            updateStepPill('step-3');
+        }
+
+        function handleSurveySubmit(e) {
+            e.preventDefault();
+            const form = new FormData(e.target);
+            
+            const newLog = {
+                id: currentSession.participantId,
+                timeCond: currentSession.timeCondition,
+                infoCond: currentSession.infoCondition,
+                char: currentSession.selectedChar,
+                latency: currentSession.latency,
+                damage: currentSession.combatTotalDamage,
+                sat: parseInt(form.get('q_sat')),
+                agency: parseInt(form.get('q_agency')),
+                visual: parseInt(form.get('q_visual')),
+                meta: parseInt(form.get('q_meta'))
+            };
+
+            experimentLogs.push(newLog);
+
+            switchPhase('phase-3', 'phase-4');
+            updateStepPill('step-4');
+            renderDashboard();
+        }
+
+        function renderDashboard() {
+            document.getElementById('stat-n').innerText = `${experimentLogs.length} 명`;
+            
+            const avgLatency = experimentLogs.reduce((acc, cur) => acc + cur.latency, 0) / experimentLogs.length;
+            document.getElementById('stat-latency').innerText = (avgLatency / 1000).toFixed(2) + ' 초';
+
+            const avgAgency = experimentLogs.reduce((acc, cur) => acc + cur.agency, 0) / experimentLogs.length;
+            document.getElementById('stat-agency').innerText = avgAgency.toFixed(1) + ' / 7';
+
+            const avgDmg = experimentLogs.reduce((acc, cur) => acc + cur.damage, 0) / experimentLogs.length;
+            document.getElementById('stat-dps').innerText = Math.round(avgDmg) + ' dmg';
+
+            const tbody = document.getElementById('data-table-body');
+            tbody.innerHTML = experimentLogs.map(log => `
+                <tr>
+                    <td><strong>${log.id}</strong></td>
+                    <td><span class="badge">${log.timeCond}</span></td>
+                    <td>${log.char}</td>
+                    <td>${log.latency} ms</td>
+                    <td>${log.damage}</td>
+                    <td>${log.sat}점</td>
+                    <td><strong>${log.agency}점</strong></td>
+                    <td>${log.visual}점</td>
+                    <td>${log.meta}점</td>
+                </tr>
+            `).join('');
+
+            drawCharts();
+        }
+
+        function drawCharts() {
+            const pieCvs = document.getElementById('chartPie');
+            if (pieCvs) {
+                const pCtx = pieCvs.getContext('2d');
+                pCtx.clearRect(0, 0, 320, 200);
+
+                const counts = {};
+                experimentLogs.forEach(l => { counts[l.char] = (counts[l.char] || 0) + 1; });
+                const colors = ['#6366f1', '#14b8a6', '#f59e0b', '#ef4444'];
+                let total = experimentLogs.length;
+                let startAngle = 0;
+
+                let idx = 0;
+                for (let char in counts) {
+                    let sliceAngle = (counts[char] / total) * (Math.PI * 2);
+                    pCtx.fillStyle = colors[idx % colors.length];
+                    pCtx.beginPath();
+                    pCtx.moveTo(100, 100);
+                    pCtx.arc(100, 100, 75, startAngle, startAngle + sliceAngle);
+                    pCtx.closePath();
+                    pCtx.fill();
+
+                    // 범례 표시
+                    pCtx.fillRect(200, 40 + (idx * 25), 12, 12);
+                    pCtx.fillStyle = '#cbd5e1';
+                    pCtx.font = '11px Pretendard';
+                    pCtx.fillText(`${char} (${counts[char]})`, 220, 50 + (idx * 25));
+
+                    startAngle += sliceAngle;
+                    idx++;
+                }
+            }
+
+            const barCvs = document.getElementById('chartBar');
+            if (barCvs) {
+                const bCtx = barCvs.getContext('2d');
+                bCtx.clearRect(0, 0, 320, 200);
+
+                const condTimes = { normal: [], pressure: [] };
+                experimentLogs.forEach(l => {
+                    if (condTimes[l.timeCond]) condTimes[l.timeCond].push(l.latency);
+                });
+
+                const avgNormal = condTimes.normal.length ? condTimes.normal.reduce((a,b)=>a+b,0)/condTimes.normal.length : 0;
+                const avgPressure = condTimes.pressure.length ? condTimes.pressure.reduce((a,b)=>a+b,0)/condTimes.pressure.length : 0;
+
+                bCtx.fillStyle = '#334155';
+                bCtx.fillRect(0, 0, 320, 200);
+
+                // 축 렌더링
+                bCtx.strokeStyle = '#64748b';
+                bCtx.beginPath(); bCtx.moveTo(50, 160); bCtx.lineTo(290, 160); bCtx.stroke();
+
+                // 바 1: 일반 조건
+                const h1 = Math.min(120, (avgNormal / 8000) * 120);
+                bCtx.fillStyle = '#6366f1';
+                bCtx.fillRect(80, 160 - h1, 50, h1);
+
+                // 바 2: 시간 압박 조건
+                const h2 = Math.min(120, (avgPressure / 8000) * 120);
+                bCtx.fillStyle = '#14b8a6';
+                bCtx.fillRect(190, 160 - h2, 50, h2);
+
+                bCtx.fillStyle = '#f8fafc';
+                bCtx.font = '11px Pretendard';
+                bCtx.fillText('일반 조건', 80, 178);
+                bCtx.fillText('시간 압박', 195, 178);
+                bCtx.fillText(`${Math.round(avgNormal)}ms`, 80, 145 - h1);
+                bCtx.fillText(`${Math.round(avgPressure)}ms`, 190, 145 - h2);
+            }
+        }
+
+        function exportCSV() {
+            let csv = 'ID,TimeCond,InfoCond,Character,Latency_ms,Damage,Satisfaction,Agency,VisualFactor,MetaFactor\n';
+            experimentLogs.forEach(l => {
+                csv += `${l.id},${l.timeCond},${l.infoCond},"${l.char}",${l.latency},${l.damage},${l.sat},${l.agency},${l.visual},${l.meta}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'HCI_Experiment_Telemetry_Data.csv';
+            a.click();
+        }
+    </script>
+</body>
+</html>
